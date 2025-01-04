@@ -1,41 +1,50 @@
-import { JwtPayload, jwtDecode } from 'jwt-decode';
+import { jwtDecode, JwtPayload } from 'jwt-decode';
 import { redirect } from 'react-router-dom';
 
 class AuthService {
+  // Decode the token and return the payload
   getProfile() {
-    // TODO: return the decoded token
-    return jwtDecode<JwtPayload>(this.getToken());
+    const token = this.getToken();
+    if (!token) {
+      throw new Error("No token available to decode");
+    }
+    return jwtDecode<JwtPayload>(token);
   }
 
+  // Check if the user is logged in by verifying if the token exists and is not expired
   loggedIn() {
-    // TODO: return a value that indicates if the user is logged in
-    return false;
+    const token = this.getToken();
+    return !!token && !this.isTokenExpired(token);
   }
-  
-  isTokenExpired(token: string) {
-    // TODO: return a value that indicates if the token is expired
-    if (!token) {
-      return true;
+
+  // Check if the token is expired
+  isTokenExpired(token: string): boolean {
+    try {
+      const { exp } = jwtDecode<JwtPayload>(token) || {};
+      if (!exp) {
+        return true;
+      }
+      // `exp` is in seconds, convert to milliseconds and compare with current time
+      return Date.now() >= exp * 1000;
+    } catch (error) {
+      return true; // Assume expired if there's an error
     }
   }
 
+  // Retrieve the token from localStorage
   getToken(): string {
-    // TODO: return the token
-    return '';
+    return localStorage.getItem('id_token') || '';
   }
 
+  // Save the token to localStorage and redirect to the home page
   login(idToken: string) {
-    // TODO: set the token to localStorage
     localStorage.setItem('id_token', idToken);
-    // TODO: redirect to the home page
     redirect('/');
-    
   }
 
+  // Remove the token from localStorage and redirect to the login page
   logout() {
-    // TODO: remove the token from localStorage
     localStorage.removeItem('id_token');
-    // TODO: redirect to the login page
     redirect('/login');
   }
 }
